@@ -213,9 +213,7 @@ public class BrutalRenderer {
             oldPoint = null;
             topLine = null;
         }
-        if ((justGoal && !wasGoal) || world.getTick() == 0) {
-            Sounds.start.play();
-        }
+
         if (justGoal && !wasGoal) {
             topLine = null;
         }
