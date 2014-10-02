@@ -1,0 +1,8 @@
+*.class
+*.sh
+*.properties
+*.jar
+*.zip
+*.bat
+read.me
+result.txt
