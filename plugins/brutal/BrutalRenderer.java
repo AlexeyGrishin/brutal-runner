@@ -3,7 +3,9 @@ package brutal;
 import model.*;
 
 import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
+import java.awt.font.TextAttribute;
 import java.awt.image.*;
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +18,9 @@ public class BrutalRenderer {
     static Sprite faces;
     static Sprite textures;
     static Sprite dude;
+    static Sprite barrels;
+    static Sprite time;
+    static Font doom;
 
     static BufferedImage load(String path) throws IOException {
         BufferedImage orig = ImageIO.read(new File(path));
@@ -38,7 +43,10 @@ public class BrutalRenderer {
             faces = new Sprite("plugins/brutal/faces.png", 32, 32, 0);
             textures = new Sprite("plugins/brutal/textures.jpg", 66, 66, 1);
             dude = new Sprite("plugins/brutal/dude.png", 40, 69, 1);
-        } catch (IOException e) {
+            doom = Font.createFont(Font.TRUETYPE_FONT, new File("plugins/brutal/amazdoomleft.ttf"));
+            barrels = new Sprite("plugins/brutal/barrels.png", 42, 57, 0);
+            time = new Sprite("plugins/brutal/time.png", 39, 48, 0);
+        } catch (IOException | FontFormatException e) {
             e.printStackTrace();
         }
     }
@@ -107,7 +115,7 @@ public class BrutalRenderer {
     }
 
     static Image bg = null;
-    static void drawBg1(Graphics2D ctx, Game game) {
+    static void drawBg1(Graphics2D ctx, Game game, World world) {
         if (bg == null) {
             bg = new BufferedImage(1200, 800, BufferedImage.TYPE_4BYTE_ABGR);
             Graphics2D g2d = (Graphics2D) bg.getGraphics();
@@ -115,7 +123,6 @@ public class BrutalRenderer {
             g2d.fillRect(0,0,1200,800);
             g2d.setPaint(textures.toTexture(10*12+4));//91/*+38*/));
             g2d.fillRect((int) game.getRinkLeft() , (int) game.getRinkTop() , (int) game.getRinkRight() - (int) game.getRinkLeft() , (int) game.getRinkBottom() - (int) game.getRinkTop() +1 );
-            textures.draw(g2d, new Rectangle(600-30, 30, 66, 66), 93);
 
             //g2d.setPaint(textures.toTexture(26*12+6, 18));
             g2d.fillRect(0, (int)game.getGoalNetTop(), (int)game.getRinkLeft(), (int)game.getGoalNetHeight());
@@ -124,16 +131,66 @@ public class BrutalRenderer {
             dude.draw(g2d, new Rectangle(20, (int) game.getGoalNetTop(), dude.wSize, dude.image.getHeight()), 1);
             dude.drawMirrored(g2d, new Rectangle(1200 - 20 - dude.wSize, (int) game.getGoalNetTop() + (int) game.getGoalNetHeight() - dude.image.getHeight(), dude.wSize, dude.image.getHeight()), 1);
             dude.drawMirrored(g2d, new Rectangle(1200-20-dude.wSize, (int) game.getGoalNetTop(), dude.wSize, dude.image.getHeight()), 0);
+
+            time.draw(g2d, new Rectangle(1150, 760, time.wSize, time.hSize), 0);
             g2d.dispose();
         }
         ctx.setBackground(Color.white);
         ctx.clearRect(0, 0, 1200, 800);
         ctx.drawImage(bg, 0, 0, null);
+        if (bloodImg != null) ctx.drawImage(bloodImg, 0, 0, null);
+
+        drawTopLine(ctx, game, world);
+    }
+
+
+    static BufferedImage topLine = null;
+
+    static void drawTopLine(Graphics2D ctx, Game game, World world) {
+
+        if (topLine == null) {
+            topLine = new BufferedImage(1200, 66, BufferedImage.TYPE_4BYTE_ABGR);
+            Graphics2D g2d = topLine.createGraphics();
+
+            g2d.setPaint(textures.toTexture(15 * 12, 2));
+            g2d.fillRect(0, 0, 1200, 64);
+
+            g2d.setFont(doom.deriveFont(24f));
+            g2d.setColor(new Color(199, 52, 63));
+            String n1 = world.getPlayers()[0].getName() + ": " + world.getPlayers()[0].getGoalCount();
+            g2d.drawString(n1, 40, 50);
+            cacodemon.draw(g2d, new Rectangle(10, 25, 25, 25), 0);
+            String n2 = world.getPlayers()[1].getName() + ": " + world.getPlayers()[1].getGoalCount();
+            g2d.setColor(new Color(199, 74, 41));
+            g2d.drawString(n2, 1200 - 40 - g2d.getFontMetrics().stringWidth(n2), 50);
+            elemental.draw(g2d, new Rectangle(1200 - 10 - 25, 25, 25, 25), 0);
+
+            String txt = null;
+            boolean justGoal = world.getPlayers()[0].isJustMissedGoal() || world.getPlayers()[0].isJustScoredGoal();
+            if (justGoal) {
+                txt = "GoaL";
+            }
+            else if (world.getTick() - world.getTickCount() > 0 && world.getTick() - world.getTickCount() < 500 ) {
+                txt = "OvertimE";
+            }
+            if (txt != null) {
+                Map<TextAttribute, Object> attributes = new HashMap<TextAttribute, Object>();
+                attributes.put(TextAttribute.TRACKING, 0.15);
+                g2d.setFont(doom.deriveFont(48f).deriveFont(attributes));
+                g2d.setPaint(textures.toTexture(12*1+3));
+                g2d.drawString(txt, 600 - g2d.getFontMetrics().stringWidth(txt) / 2, 60);
+            }
+
+            g2d.dispose();
+        }
+        ctx.drawImage(topLine, 0, 0, null);
+        textures.draw(ctx, new Rectangle(450, 10, 46, 46), 15 * 12 + 1);
+        textures.draw(ctx, new Rectangle(684, 10, 46, 46), 15 * 12 + 1);
+        barrels.draw(ctx, new Rectangle(450, 20, barrels.wSize, barrels.hSize), (world.getTick() / 5) % 3 );
+        barrels.draw(ctx, new Rectangle(684, 20, barrels.wSize, barrels.hSize), (world.getTick() / 10) % 3 );
     }
 
     static void drawBg2(Graphics2D ctx, World world, Game game) {
-        //ctx.setBackground(Color.white);
-        //ctx.clearRect(0, (int) game.getRinkTop() - 10, 1200, (int) game.getRinkBottom() - (int) game.getRinkTop() + 15);
         ctx.drawImage(bg, 0, (int) game.getRinkTop() - 10, 1200, (int) game.getRinkBottom() + 5,
                 0, (int) game.getRinkTop() - 10, 1200, (int) game.getRinkBottom() + 5, null);
         if (bloodImg != null) ctx.drawImage(bloodImg, 0, 0, null);
@@ -142,10 +199,11 @@ public class BrutalRenderer {
     static boolean wasGoal;
 
     public static void beforeDrawScene(Graphics graphics, World world, Game game, double scale) {
-        Graphics2D g2d = (Graphics2D) graphics.create();
-        drawBg1(g2d, game);
-        g2d.dispose();
+        //Graphics2D g2d = (Graphics2D) graphics.create();
+        //drawBg1(g2d, game, world);
+        //g2d.dispose();
     }
+
 
 
     public static void afterDrawScene(Graphics graphics, World world, Game game, double scale) {
@@ -153,10 +211,20 @@ public class BrutalRenderer {
         if (!justGoal && wasGoal) {
             bloodImg = null;
             oldPoint = null;
+            topLine = null;
+        }
+        if ((justGoal && !wasGoal) || world.getTick() == 0) {
+            Sounds.start.play();
+        }
+        if (justGoal && !wasGoal) {
+            topLine = null;
+        }
+        if (world.getTick() == world.getTickCount() || world.getTick() - world.getTickCount() == 500) {
+            topLine = null;
         }
         wasGoal = justGoal;
         Graphics2D g2d = (Graphics2D) graphics.create();
-        drawBg2(g2d, world, game);
+        drawBg1(g2d, game, world);
         for (Hockeyist hoc: world.getHockeyists()) {
             if (hoc.getPlayerId() == 1) {
                 cacodemon.drawM(g2d, toRect(hoc), statusAndDir(hoc, world.getTick(), game, 1, 3, 30, 5));
@@ -173,14 +241,22 @@ public class BrutalRenderer {
         else {
             oldPoint = null;
         }
+
+        g2d.setFont(doom.deriveFont(20f));
+        g2d.setColor(Color.red);
+        String t = "" + world.getTick();
+
+        g2d.drawString(t, 1170 - g2d.getFontMetrics().stringWidth(t)/2, 760);
+
         g2d.dispose();
     }
 
 
     static Color blood = new Color(138,7,7);
 
-    static Image bloodImg = null;
+    static BufferedImage bloodImg = null;
     static Point oldPoint = null;
+    static int[] colors = new int[1200*600];
 
     static void blood(Point point, World world) {
         if (bloodImg == null) {
@@ -192,7 +268,22 @@ public class BrutalRenderer {
         }
         if (oldPoint != null) {
             Graphics2D g2d = (Graphics2D) bloodImg.getGraphics();
-            for (int a = 0; a < Math.random()*5 + 17; a++) {
+            if (world.getTick() % 10 == 0) {
+
+                byte[] imagePixelData = ((DataBufferByte)bloodImg.getRaster().getDataBuffer()).getData();
+                for (int i = 3; i < imagePixelData.length; i+=4) {
+                    if (imagePixelData[i] != 0) {
+                        short abs = imagePixelData[i];
+                        if (abs < 0) abs += 256;
+                        abs = (short)(abs* 0.99);
+                        if (abs >= 128) abs-=256;
+                        imagePixelData[i] = (byte) abs;
+                    }
+
+                }
+            }
+
+            for (int a = 0; a < 5; a++) {
                 int dx = (int)(Math.random()*10 - 5);
                 int dy = (int)(Math.random()*10 - 5);
                 float d1 = (float)(Math.random()*10);
@@ -211,4 +302,6 @@ public class BrutalRenderer {
         }
         oldPoint = point;
     }
+
+
 }
