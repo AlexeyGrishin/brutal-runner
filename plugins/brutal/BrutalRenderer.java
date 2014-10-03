@@ -61,20 +61,21 @@ public class BrutalRenderer {
     }
 
 
-    static Rectangle toRect(Unit unit) {
-        return new Rectangle((int)unit.getX() - (int)unit.getRadius() - 1, (int)unit.getY() - (int)unit.getRadius() - 1, (int)unit.getRadius()*2+2, (int)unit.getRadius()*2+2);
+    static Rectangle toRect(Hockeyist hoc) {
+        double posY = hoc.getState() == HockeyistState.RESTING ? hoc.getY() + 60 : hoc.getY();
+        return new Rectangle((int)hoc.getX() - (int)hoc.getRadius() - 1, (int)posY - (int)hoc.getRadius() - 1, (int)hoc.getRadius()*2+2, (int)hoc.getRadius()*2+2);
     }
     static Rectangle toRect(Puck unit) {
         return new Rectangle((int)unit.getX() - 16, (int)unit.getY() - 16, 32, 32);
     }
 
-    static int direction(Hockeyist hockeyist) {
+    static int direction(double angle) {
         //angle pi/2 -> 0
         //angle pi -> 2 //2pi
         //angle -pi/2 -> 4
         //angle 0 -> 6 //pi
         //(angle + pi)*4 / pi
-        return (int)Math.round(6 - -hockeyist.getAngle()*4 / Math.PI) % 8;
+        return (int)Math.round(6 + angle * 4 / Math.PI) % 8;
     }
 
     static int faceDirection(Puck puck) {
@@ -102,16 +103,19 @@ public class BrutalRenderer {
         }
     }
 
-    static int statusAndDir(Hockeyist hockeyist, int tick, Game game,  int swingStart, int swingCt, int kdStart, int kdCount) {
-        int nr = direction(hockeyist);
+    static int statusAndDir(Hockeyist hockeyist, World world, Game game,  int swingStart, int swingCt, int kdStart, int kdCount) {
+        int nr = direction(hockeyist.getAngle());
         if (hockeyist.getState() == HockeyistState.SWINGING) {
             nr = nr + (swingStart + (swingCt * hockeyist.getSwingTicks() / game.getMaxEffectiveSwingTicks()))*8;
         }
         else if (hockeyist.getState() == HockeyistState.KNOCKED_DOWN) {
             nr = -(kdStart + (kdCount - Math.abs(hockeyist.getRemainingKnockdownTicks() - 20)*kdCount/20));
         }
-        else if ((hockeyist.getLastAction() == ActionType.STRIKE) && tick - hockeyist.getLastActionTick() < 20) {
+        else if ((hockeyist.getLastAction() == ActionType.STRIKE) && world.getTick() - hockeyist.getLastActionTick() < 20) {
             nr = nr + 8*(swingStart + swingCt-1);
+        }
+        else if (hockeyist.getState() == HockeyistState.RESTING) {
+            nr = direction(hockeyist.getAngle() + hockeyist.getAngleTo(world.getPuck()));
         }
         return nr;
     }
@@ -227,10 +231,10 @@ public class BrutalRenderer {
         drawBg1(g2d, game, world);
         for (Hockeyist hoc: world.getHockeyists()) {
             if (hoc.getPlayerId() == 1) {
-                cacodemon.drawM(g2d, toRect(hoc), statusAndDir(hoc, world.getTick(), game, 1, 3, 30, 5));
+                cacodemon.drawM(g2d, toRect(hoc), statusAndDir(hoc, world, game, 1, 3, 30, 5));
             }
             else {
-                elemental.drawM(g2d, toRect(hoc), statusAndDir(hoc, world.getTick(), game, 3, 3, 35, 3));
+                elemental.drawM(g2d, toRect(hoc), statusAndDir(hoc, world, game, 3, 3, 35, 3));
             }
         }
         faces.draw(g2d, toRect(world.getPuck()), faceDirection(world.getPuck()));
