@@ -156,13 +156,17 @@ public class BrutalRenderer {
         drawTopLine(ctx, game, world);
     }
 
+    static int polRedrawn = 0;
     static void drawWall(Graphics2D ctx) {
         if (wall.updated()) {
             wallImg = new BufferedImage(1200, 800, BufferedImage.TYPE_4BYTE_ABGR);
             Graphics2D g2d = (Graphics2D) wallImg.getGraphics();
             g2d.setPaint(textures.toTexture(10 * 12 + 4));//91/*+38*/));
             g2d.fillPolygon(wall.getPolygon());
-            g2d.drawPolygon(wall.getPolygon());
+            polRedrawn++;
+            g2d.setPaint(null);
+            g2d.setColor(Color.YELLOW);
+            //g2d.drawString("WALL: " + polRedrawn, 0, 700);
             g2d.dispose();
         }
         ctx.drawImage(wallImg, 0, 0, null);

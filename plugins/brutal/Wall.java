@@ -106,42 +106,44 @@ public class Wall {
         return (int)(crd / baseDeformationR/2)*baseDeformationR*2;
     }
 
-    void add(Map<Integer, Integer> map, double key, int val, boolean neigh) {
+    boolean add(Map<Integer, Integer> map, double key, int val, boolean neigh) {
         int k = rnd(key);
         int oldVal = map.containsKey(k) ? map.get(k) : 0;
-        map.put(k, Math.min(maxDeformationD, oldVal + val));
+        int newVal = Math.min(maxDeformationD, oldVal + val);
+        boolean changed = newVal > oldVal;
+        map.put(k, newVal);
         if (neigh) {
-            add(map, key - baseDeformationR, val / 2, false);
-            add(map, key + baseDeformationR, val / 2, false);
+            changed = changed || add(map, key - baseDeformationR, val / 2, false);
+            changed = changed || add(map, key + baseDeformationR, val / 2, false);
         }
+        if (changed) {
+            polygon = null;
+        }
+        return changed;
     }
 
     int strength(Unit unit, double vpart) {
-        double speed = Math.hypot(unit.getSpeedX(), unit.getSpeedY());
-        if (speed == 0) return 0;
+        if (vpart < 0) return 0;
         return (int)((unit.getMass() > 5 ? 10 : 5) * Math.abs(vpart)) / 10;
     }
 
     public void addCollision(Unit unit) {
         if (Math.abs(unit.getY() - y0) < unit.getRadius() ) {
             //top
-            add(topXes, unit.getX(), strength(unit, unit.getSpeedY()), unit.getRadius() > 10);
-            polygon = null;
+            add(topXes, unit.getX(), strength(unit, -unit.getSpeedY()), unit.getRadius() > 20);
+
         }
         else if (Math.abs(unit.getY() - y1) < unit.getRadius() ) {
             //bottom
-            add(bottomXes, unit.getX(), strength(unit, unit.getSpeedY()), unit.getRadius() > 10);
-            polygon = null;
+            add(bottomXes, unit.getX(), strength(unit, unit.getSpeedY()), unit.getRadius() > 20);
         }
         else if (Math.abs(unit.getX() - x0) < unit.getRadius()) {
             //left
-            add(leftYes, unit.getY(), strength(unit, unit.getSpeedX()), unit.getRadius() > 10);
-            polygon = null;
+            add(leftYes, unit.getY(), strength(unit, -unit.getSpeedX()), unit.getRadius() > 20);
         }
         else if (Math.abs(unit.getX() - x1) < unit.getRadius()) {
             //right
-            add(rightYes, unit.getY(), strength(unit, unit.getSpeedX()), unit.getRadius() > 10);
-            polygon = null;
+            add(rightYes, unit.getY(), strength(unit, unit.getSpeedX()), unit.getRadius() > 20);
         }
 
     }
