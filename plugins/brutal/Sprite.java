@@ -52,7 +52,7 @@ class Sprite {
         int colsInRow = image.getWidth(null) / wSize;
         int row = number / colsInRow;
         int col = number % colsInRow;
-        img1.getGraphics().drawImage(image, 0, 0, wSize - 2*pad, hSize - 2*pad, col*wSize+pad, row*hSize+pad, col*wSize+ wSize-pad, row*hSize + hSize-pad, null);
+        img1.getGraphics().drawImage(image, 0, 0, wSize - 2*pad, hSize - 2*pad, col*wSize+pad*2, row*hSize+pad*2, col*wSize+ wSize-pad, row*hSize + hSize-pad, null);
         return new TexturePaint(img1, new Rectangle(
                 0, 0, wSize - 2*pad-1, hSize - 2*pad-1
         ));
@@ -63,7 +63,7 @@ class Sprite {
         int colsInRow = image.getWidth(null) / wSize;
         int row = number / colsInRow;
         int col = number % colsInRow;
-        img1.getGraphics().drawImage(image, 0, 0, wSize - 2*wpad, hSize - 2*pad, col*wSize+wpad, row*hSize+pad, col*wSize+ wSize-wpad, row*hSize + hSize-pad, null);
+        img1.getGraphics().drawImage(image, 0, 0, wSize - 2*wpad, hSize - 2*pad, col*wSize+wpad*2, row*hSize+pad*2, col*wSize+ wSize-wpad, row*hSize + hSize-pad, null);
         return new TexturePaint(img1, new Rectangle(
                 0, 0, wSize - 2*wpad-1, hSize - 2*pad-1
         ));

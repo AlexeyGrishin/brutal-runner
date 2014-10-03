@@ -46,7 +46,9 @@ public class BrutalRenderer {
             doom = Font.createFont(Font.TRUETYPE_FONT, new File("plugins/brutal/amazdoomleft.ttf"));
             barrels = new Sprite("plugins/brutal/barrels.png", 42, 57, 0);
             time = new Sprite("plugins/brutal/time.png", 39, 48, 0);
-        } catch (IOException | FontFormatException e) {
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (FontFormatException e) {
             e.printStackTrace();
         }
     }
