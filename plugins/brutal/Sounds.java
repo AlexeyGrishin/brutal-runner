@@ -11,7 +11,7 @@ public class Sounds {
 
     static {
         try {
-            start = new Sound("C:\\Users\\Alex\\Downloads\\allsounds\\dstelept`.wav");
+            start = new Sound("dstelept.wav");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (UnsupportedAudioFileException e) {
