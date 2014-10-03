@@ -25,7 +25,7 @@ public class BrutalRenderer {
 
     static BufferedImage load(String path) throws IOException {
         BufferedImage orig = ImageIO.read(new File(path));
-        BufferedImage processed = new BufferedImage(orig.getWidth(null), orig.getHeight(null), BufferedImage.TYPE_4BYTE_ABGR);
+        BufferedImage processed = new BufferedImage(orig.getWidth(null), orig.getHeight(null), BufferedImage.TYPE_INT_ARGB);
         Color rtColor = new Color(orig.getRGB(0, 0));
         Color trColor = new Color(rtColor.getRed(), rtColor.getGreen(), rtColor.getBlue(), 0);
         for (int x = 0; x < orig.getWidth(); x++) {
@@ -129,7 +129,7 @@ public class BrutalRenderer {
             wall = new Wall((int)game.getRinkLeft(), (int)game.getRinkTop(), (int)game.getRinkRight(), (int)game.getRinkBottom());
         }
         if (bg == null) {
-            bg = new BufferedImage(1200, 800, BufferedImage.TYPE_4BYTE_ABGR);
+            bg = new BufferedImage(1200, 800, BufferedImage.TYPE_INT_RGB);
             Graphics2D g2d = (Graphics2D) bg.getGraphics();
             g2d.setPaint(textures.toTexture(21 * 12 + 9, 18));
             g2d.fillRect(0, 0, 1200, 800);
@@ -147,8 +147,6 @@ public class BrutalRenderer {
             time.draw(g2d, new Rectangle(1150, 760, time.wSize, time.hSize), 0);
             g2d.dispose();
         }
-        ctx.setBackground(Color.white);
-        ctx.clearRect(0, 0, 1200, 800);
         ctx.drawImage(bg, 0, 0, null);
         drawWall(ctx);
         if (bloodImg != null) ctx.drawImage(bloodImg, 0, 0, null);
@@ -179,7 +177,7 @@ public class BrutalRenderer {
     static void drawTopLine(Graphics2D ctx, Game game, World world) {
 
         if (topLine == null) {
-            topLine = new BufferedImage(1200, 66, BufferedImage.TYPE_4BYTE_ABGR);
+            topLine = new BufferedImage(1200, 66, BufferedImage.TYPE_INT_RGB);
             Graphics2D g2d = topLine.createGraphics();
 
             g2d.setPaint(textures.toTexture(15 * 12, 2));
@@ -220,11 +218,6 @@ public class BrutalRenderer {
         barrels.draw(ctx, new Rectangle(684, 20, barrels.wSize, barrels.hSize), (world.getTick() / 10) % 3 );
     }
 
-    static void drawBg2(Graphics2D ctx, World world, Game game) {
-        ctx.drawImage(bg, 0, (int) game.getRinkTop() - 10, 1200, (int) game.getRinkBottom() + 5,
-                0, (int) game.getRinkTop() - 10, 1200, (int) game.getRinkBottom() + 5, null);
-        if (bloodImg != null) ctx.drawImage(bloodImg, 0, 0, null);
-    }
 
     static boolean wasGoal;
 
@@ -237,6 +230,8 @@ public class BrutalRenderer {
 
 
     public static void afterDrawScene(Graphics graphics, World world, Game game, double scale) {
+        long ns = System.nanoTime();
+
         boolean justGoal = world.getPlayers()[0].isJustMissedGoal() || world.getPlayers()[0].isJustScoredGoal();
         if (!justGoal && wasGoal) {
             bloodImg = null;
@@ -280,37 +275,46 @@ public class BrutalRenderer {
         g2d.drawString(t, 1170 - g2d.getFontMetrics().stringWidth(t)/2, 760);
 
         g2d.dispose();
+        long ns2 = System.nanoTime();
+        totalTime += (ns2 - ns);
+        if (world.getTick() % 100 == 1) {
+            System.out.println((ns2-ns)/1000000 + "\t" + totalTime / world.getTick()/1000000 + "\t" + totalTime/1000000);
+        }
     }
+
+    static long totalTime = 0;
 
 
     static Color blood = new Color(138,7,7);
 
     static BufferedImage bloodImg = null;
     static Point oldPoint = null;
-    static int[] colors = new int[1200*600];
 
     static void blood(Point point, World world) {
         if (bloodImg == null) {
-            bloodImg = new BufferedImage(1200, 800, BufferedImage.TYPE_4BYTE_ABGR);
+            bloodImg = new BufferedImage(1200, 800, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = (Graphics2D) bloodImg.getGraphics();
-            g2d.setBackground(new Color(0, 0, 0, 0));
-            g2d.clearRect(0, 0, 1200, 800);
+            //g2d.setBackground(new Color(0, 0, 0, 0));
+            //g2d.clearRect(0, 0, 1200, 800);
             g2d.dispose();
         }
         if (oldPoint != null) {
             Graphics2D g2d = (Graphics2D) bloodImg.getGraphics();
             if (world.getTick() % 10 == 0) {
 
-                byte[] imagePixelData = ((DataBufferByte)bloodImg.getRaster().getDataBuffer()).getData();
-                for (int i = 3; i < imagePixelData.length; i+=4) {
-                    if (imagePixelData[i] != 0) {
-                        short abs = imagePixelData[i];
-                        if (abs < 0) abs += 256;
-                        abs = (short)(abs* 0.99);
-                        if (abs >= 128) abs-=256;
-                        imagePixelData[i] = (byte) abs;
-                    }
+                DataBuffer buffer = bloodImg.getRaster().getDataBuffer();
+                if (buffer instanceof DataBufferByte) {
+                    byte[] imagePixelData = ((DataBufferByte) buffer).getData();
+                    for (int i = 3; i < imagePixelData.length; i += 4) {
+                        if (imagePixelData[i] != 0) {
+                            short abs = imagePixelData[i];
+                            if (abs < 0) abs += 256;
+                            abs = (short) (abs * 0.99);
+                            if (abs >= 128) abs -= 256;
+                            imagePixelData[i] = (byte) abs;
+                        }
 
+                    }
                 }
             }
 
