@@ -12,7 +12,9 @@ public class Sounds {
     static {
         try {
             start = new Sound("C:\\Users\\Alex\\Downloads\\allsounds\\dstelept`.wav");
-        } catch (IOException | UnsupportedAudioFileException e) {
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (UnsupportedAudioFileException e) {
             e.printStackTrace();
         }
     }
@@ -28,7 +30,9 @@ public class Sounds {
                 Clip clip = AudioSystem.getClip();
                 clip.open(stream);
                 clip.start();
-            } catch (LineUnavailableException | IOException e) {
+            } catch (LineUnavailableException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }

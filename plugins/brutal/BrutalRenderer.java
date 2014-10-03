@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.font.TextAttribute;
 import java.awt.image.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
 
@@ -117,16 +118,21 @@ public class BrutalRenderer {
     }
 
     static Image bg = null;
+    static Wall wall = null;
+    static Image wallImg = null;
     static void drawBg1(Graphics2D ctx, Game game, World world) {
+        if (wall == null) {
+            wall = new Wall((int)game.getRinkLeft(), (int)game.getRinkTop(), (int)game.getRinkRight(), (int)game.getRinkBottom());
+        }
         if (bg == null) {
             bg = new BufferedImage(1200, 800, BufferedImage.TYPE_4BYTE_ABGR);
             Graphics2D g2d = (Graphics2D) bg.getGraphics();
-            g2d.setPaint(textures.toTexture(21*12+9, 18));
-            g2d.fillRect(0,0,1200,800);
-            g2d.setPaint(textures.toTexture(10*12+4));//91/*+38*/));
-            g2d.fillRect((int) game.getRinkLeft() , (int) game.getRinkTop() , (int) game.getRinkRight() - (int) game.getRinkLeft() , (int) game.getRinkBottom() - (int) game.getRinkTop() +1 );
+            g2d.setPaint(textures.toTexture(21 * 12 + 9, 18));
+            g2d.fillRect(0, 0, 1200, 800);
+            //g2d.fillRect((int) game.getRinkLeft() , (int) game.getRinkTop() , (int) game.getRinkRight() - (int) game.getRinkLeft() , (int) game.getRinkBottom() - (int) game.getRinkTop() +1 );
 
             //g2d.setPaint(textures.toTexture(26*12+6, 18));
+            g2d.setPaint(textures.toTexture(10 * 12 + 4));
             g2d.fillRect(0, (int)game.getGoalNetTop(), (int)game.getRinkLeft(), (int)game.getGoalNetHeight());
             g2d.fillRect((int)game.getRinkRight(), (int)game.getGoalNetTop(), (int)game.getRinkLeft(), (int) game.getGoalNetHeight());
             dude.draw(g2d, new Rectangle(20, (int) game.getGoalNetTop() + (int) game.getGoalNetHeight() - dude.image.getHeight(), dude.wSize, dude.image.getHeight()), 0);
@@ -140,9 +146,23 @@ public class BrutalRenderer {
         ctx.setBackground(Color.white);
         ctx.clearRect(0, 0, 1200, 800);
         ctx.drawImage(bg, 0, 0, null);
+        drawWall(ctx);
         if (bloodImg != null) ctx.drawImage(bloodImg, 0, 0, null);
 
         drawTopLine(ctx, game, world);
+    }
+
+    static void drawWall(Graphics2D ctx) {
+        if (wall.updated()) {
+            wallImg = new BufferedImage(1200, 800, BufferedImage.TYPE_4BYTE_ABGR);
+            Graphics2D g2d = (Graphics2D) wallImg.getGraphics();
+            g2d.setPaint(textures.toTexture(10 * 12 + 4));//91/*+38*/));
+            g2d.fillPolygon(wall.getPolygon());
+            g2d.drawPolygon(wall.getPolygon());
+            g2d.dispose();
+        }
+        ctx.drawImage(wallImg, 0, 0, null);
+
     }
 
 
@@ -232,8 +252,11 @@ public class BrutalRenderer {
             else {
                 elemental.drawM(g2d, toRect(hoc), statusAndDir(hoc, world.getTick(), game, 3, 3, 35, 3));
             }
+            wall.addCollision(hoc);
         }
         faces.draw(g2d, toRect(world.getPuck()), faceDirection(world.getPuck()));
+
+        wall.addCollision(world.getPuck());
 
         if (world.getPuck().getOwnerPlayerId() == -1) {
             blood(new Point((int) world.getPuck().getX(), (int) world.getPuck().getY()), world);
