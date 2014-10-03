@@ -133,7 +133,8 @@ public class BrutalRenderer {
             Graphics2D g2d = (Graphics2D) bg.getGraphics();
             g2d.setPaint(textures.toTexture(21 * 12 + 9, 18));
             g2d.fillRect(0, 0, 1200, 800);
-            //g2d.fillRect((int) game.getRinkLeft() , (int) game.getRinkTop() , (int) game.getRinkRight() - (int) game.getRinkLeft() , (int) game.getRinkBottom() - (int) game.getRinkTop() +1 );
+            g2d.setPaint(textures.toTexture(10 * 12 + 4));//91/*+38*/));
+           g2d.fillRect((int) game.getRinkLeft() , (int) game.getRinkTop() , (int) game.getRinkRight() - (int) game.getRinkLeft() , (int) game.getRinkBottom() - (int) game.getRinkTop() +1 );
 
             //g2d.setPaint(textures.toTexture(26*12+6, 18));
             g2d.setPaint(textures.toTexture(10 * 12 + 4));
@@ -157,10 +158,13 @@ public class BrutalRenderer {
     static int polRedrawn = 0;
     static void drawWall(Graphics2D ctx) {
         if (wall.updated()) {
-            wallImg = new BufferedImage(1200, 800, BufferedImage.TYPE_4BYTE_ABGR);
+            wallImg = new BufferedImage(1200, 800, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g2d = (Graphics2D) wallImg.getGraphics();
             g2d.setPaint(textures.toTexture(10 * 12 + 4));//91/*+38*/));
-            g2d.fillPolygon(wall.getPolygon());
+            g2d.fillPolygon(wall.getTop());
+            g2d.fillPolygon(wall.getBottom());
+            g2d.fillPolygon(wall.getLeft());
+            g2d.fillPolygon(wall.getRight());
             polRedrawn++;
             g2d.setPaint(null);
             g2d.setColor(Color.YELLOW);
@@ -230,7 +234,6 @@ public class BrutalRenderer {
 
 
     public static void afterDrawScene(Graphics graphics, World world, Game game, double scale) {
-        long ns = System.nanoTime();
 
         boolean justGoal = world.getPlayers()[0].isJustMissedGoal() || world.getPlayers()[0].isJustScoredGoal();
         if (!justGoal && wasGoal) {
@@ -275,11 +278,7 @@ public class BrutalRenderer {
         g2d.drawString(t, 1170 - g2d.getFontMetrics().stringWidth(t)/2, 760);
 
         g2d.dispose();
-        long ns2 = System.nanoTime();
-        totalTime += (ns2 - ns);
-        if (world.getTick() % 100 == 1) {
-            System.out.println((ns2-ns)/1000000 + "\t" + totalTime / world.getTick()/1000000 + "\t" + totalTime/1000000);
-        }
+
     }
 
     static long totalTime = 0;

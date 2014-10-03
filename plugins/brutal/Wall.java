@@ -12,7 +12,11 @@ public class Wall {
             return o2 - o1;
         }
     };
-    private Polygon polygon = null;
+
+    private Polygon top = null;
+    private Polygon bottom = null;
+    private Polygon left = null;
+    private Polygon right = null;
 
     int x0, y0, x1, y1;
 
@@ -34,72 +38,92 @@ public class Wall {
     int baseDeformationR = 5;
 
     void update() {
-        polygon = new Polygon();
-        polygon.addPoint(x0,y0);
+        top = new Polygon();
+        top.addPoint(x0,y0);
+
         //top
         for (int x: topXes.keySet()) {
             int st = topXes.get(x);
-            int lastX = polygon.xpoints[polygon.npoints-1];
+            int lastX = top.xpoints[top.npoints-1];
             if (x - lastX > baseDeformationR*2) {
-                if (lastX != x0) polygon.addPoint(lastX+baseDeformationR, y0);
-                polygon.addPoint(x - baseDeformationR, y0);
+                if (lastX != x0) top.addPoint(lastX+baseDeformationR, y0);
+                top.addPoint(x - baseDeformationR, y0);
             }
-            polygon.addPoint(x, y0-st);
+            top.addPoint(x, y0-st);
 
         }
-        int lastX = polygon.xpoints[polygon.npoints-1];
+        int lastX = top.xpoints[top.npoints-1];
         if (x1 - lastX > baseDeformationR*2 ) {
-            polygon.addPoint(lastX+baseDeformationR, y0);
+            top.addPoint(lastX+baseDeformationR, y0);
         }
-        polygon.addPoint(x1,y0);
+        top.addPoint(x1,y0);
+        top.addPoint(x1,y0+5);
+        top.addPoint(x0,y0+5);
+
+        right = new Polygon();
+        right.addPoint(x1,y0);
         //right
         for (int y: rightYes.keySet()) {
             int st = rightYes.get(y);
-            int lastY = polygon.ypoints[polygon.npoints-1];
+            int lastY = right.ypoints[right.npoints-1];
             if (y - lastY > baseDeformationR*2) {
-                if (lastY != y0) polygon.addPoint(x1, lastY + baseDeformationR);
-                polygon.addPoint(x1, y - baseDeformationR);
+                if (lastY != y0) right.addPoint(x1, lastY + baseDeformationR);
+                right.addPoint(x1, y - baseDeformationR);
             }
-            polygon.addPoint(x1 + st, y);
+            right.addPoint(x1 + st, y);
 
         }
-        int lastY = polygon.ypoints[polygon.npoints-1];
+        int lastY = right.ypoints[right.npoints-1];
         if (y1 - lastY > baseDeformationR*2 ) {
-            polygon.addPoint(x1, lastY + baseDeformationR);
+            right.addPoint(x1, lastY + baseDeformationR);
         }
-        polygon.addPoint(x1,y1);
+        right.addPoint(x1,y1);
+        right.addPoint(x1-5,y1);
+        right.addPoint(x1-5,y0);
+
+        bottom = new Polygon();
+        bottom.addPoint(x1, y1);
         //bottom
         for (int x: bottomXes.keySet()) {
             int st = bottomXes.get(x);
-            lastX = polygon.xpoints[polygon.npoints-1];
+            lastX = bottom.xpoints[bottom.npoints-1];
             if (lastX - x > baseDeformationR*2) {
-                if (lastX != x1) polygon.addPoint(lastX-baseDeformationR, y1);
-                polygon.addPoint(x+baseDeformationR, y1);
+                if (lastX != x1) bottom.addPoint(lastX-baseDeformationR, y1);
+                bottom.addPoint(x+baseDeformationR, y1);
             }
 
-            polygon.addPoint(x, y1+st);
+            bottom.addPoint(x, y1+st);
 
         }
-        lastX = polygon.xpoints[polygon.npoints-1];
+        lastX = bottom.xpoints[bottom.npoints-1];
         if (lastX - x0 > baseDeformationR*2) {
-            polygon.addPoint(lastX-baseDeformationR, y1);
+            bottom.addPoint(lastX-baseDeformationR, y1);
         }
-        polygon.addPoint(x0,y1);
+        bottom.addPoint(x0,y1);
+        bottom.addPoint(x0,y1-5);
+        bottom.addPoint(x1,y1-5);
+
+        left = new Polygon();
+        left.addPoint(x0,y1);
         //left
         for (int y: leftYes.keySet()) {
             int st = leftYes.get(y);
-            lastY = polygon.ypoints[polygon.npoints-1];
+            lastY = left.ypoints[left.npoints-1];
             if (lastY - y0 > baseDeformationR*2) {
-                if (lastY != y1) polygon.addPoint(x0, lastY - baseDeformationR);
-                polygon.addPoint(x0, y + baseDeformationR);
+                if (lastY != y1) left.addPoint(x0, lastY - baseDeformationR);
+                left.addPoint(x0, y + baseDeformationR);
             }
-            polygon.addPoint(x0 - st, y);
+            left.addPoint(x0 - st, y);
 
         }
-        lastY = polygon.ypoints[polygon.npoints-1];
+        lastY = left.ypoints[left.npoints-1];
         if (lastY - y0 > baseDeformationR*2) {
-            polygon.addPoint(x0, lastY - baseDeformationR);
+            left.addPoint(x0, lastY - baseDeformationR);
         }
+
+        left.addPoint(x0, y0);
+        left.addPoint(x0+5, y0);
+        left.addPoint(x0+5, y1);
     }
 
     int rnd(double crd) {
@@ -117,7 +141,7 @@ public class Wall {
             changed = changed || add(map, key + baseDeformationR, val / 2, false);
         }
         if (changed) {
-            polygon = null;
+            top = null;
         }
         return changed;
     }
@@ -149,15 +173,35 @@ public class Wall {
     }
 
     public boolean updated() {
-        return polygon == null;
+        return top == null;
     }
 
-    public Polygon getPolygon() {
-        if (polygon == null) {
+
+    public Polygon getTop() {
+        if (top == null) {
             update();
         }
-        return polygon;
+        return top;
     }
 
+    public Polygon getBottom() {
+        if (top == null) {
+            update();
+        }
+        return bottom;
+    }
 
+    public Polygon getLeft() {
+        if (top == null) {
+            update();
+        }
+        return left;
+    }
+
+    public Polygon getRight() {
+        if (top == null) {
+            update();
+        }
+        return right;
+    }
 }
