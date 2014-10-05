@@ -130,15 +130,20 @@ public class Wall {
         return (int)(crd / baseDeformationR/2)*baseDeformationR*2;
     }
 
-    boolean add(Map<Integer, Integer> map, double key, int val, boolean neigh) {
+    boolean add(Map<Integer, Integer> map, double key, int val, double radius) {
         int k = rnd(key);
         int oldVal = map.containsKey(k) ? map.get(k) : 0;
         int newVal = Math.min(maxDeformationD, oldVal + val);
         boolean changed = newVal > oldVal;
         map.put(k, newVal);
-        if (neigh) {
-            changed = changed || add(map, key - baseDeformationR, val / 2, false);
-            changed = changed || add(map, key + baseDeformationR, val / 2, false);
+        if (radius > 0) {
+            System.out.println("rad " + radius + " near " + k);
+            for (int kn = rnd(key - radius); kn <= rnd(key + radius); kn+=baseDeformationR) {
+                if (kn == k) continue;
+                double nval = Math.abs(Math.cos(Math.PI / 2 * Math.abs(kn - k)/(radius))) * val;
+                changed = changed || add(map, kn, (int)nval, 0);
+                System.out.println("  " + kn + " = " + nval + " (" + (nval / val) + ")");
+            }
         }
         if (changed) {
             top = null;
@@ -148,26 +153,26 @@ public class Wall {
 
     int strength(Unit unit, double vpart) {
         if (vpart < 0) return 0;
-        return (int)((unit.getMass() > 5 ? 10 : 5) * Math.abs(vpart)) / 10;
+        return (int)((unit.getMass() > 5 ? 15 : 10) * Math.abs(vpart)) / 10;
     }
 
     public void addCollision(Unit unit) {
         if (Math.abs(unit.getY() - y0) < unit.getRadius() ) {
             //top
-            add(topXes, unit.getX(), strength(unit, -unit.getSpeedY()), unit.getRadius() > 20);
+            add(topXes, unit.getX(), strength(unit, -unit.getSpeedY()), unit.getRadius());
 
         }
         else if (Math.abs(unit.getY() - y1) < unit.getRadius() ) {
             //bottom
-            add(bottomXes, unit.getX(), strength(unit, unit.getSpeedY()), unit.getRadius() > 20);
+            add(bottomXes, unit.getX(), strength(unit, unit.getSpeedY()), unit.getRadius());
         }
         else if (Math.abs(unit.getX() - x0) < unit.getRadius()) {
             //left
-            add(leftYes, unit.getY(), strength(unit, -unit.getSpeedX()), unit.getRadius() > 20);
+            add(leftYes, unit.getY(), strength(unit, -unit.getSpeedX()), unit.getRadius());
         }
         else if (Math.abs(unit.getX() - x1) < unit.getRadius()) {
             //right
-            add(rightYes, unit.getY(), strength(unit, unit.getSpeedX()), unit.getRadius() > 20);
+            add(rightYes, unit.getY(), strength(unit, unit.getSpeedX()), unit.getRadius());
         }
 
     }
